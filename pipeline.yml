@@ -1,0 +1,43 @@
+trigger: none
+pr: none
+
+#schedules:
+#- cron: "0 15 * * 0"
+#  displayName: "Weekly AI Cybersecurity Intelligence"
+#  branches:
+#    include:
+#    - main
+#  always: true
+
+variables:
+  - group: ai-redteam
+  - name: DAYS_BACK
+    value: '7'
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: "3.11"
+  displayName: "Use Python 3.11"
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+  displayName: "Install dependencies"
+
+- script: |
+    python ai_cyber_intelligence.py
+  displayName: "Collect AI and cybersecurity intelligence"
+  env:
+    DAYS_BACK: $(DAYS_BACK)
+    GITHUB_TOKEN: $(GITHUB_TOKEN)
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: "$(System.DefaultWorkingDirectory)/reports"
+    artifact: "AI-Cybersecurity-Intelligence"
+    publishLocation: "pipeline"
+  displayName: "Publish intelligence reports"
